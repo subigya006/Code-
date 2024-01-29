@@ -1,0 +1,128 @@
+import pygame
+import sys
+
+pygame.init()
+
+screen_width, screen_height = 1000, 700
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('Runner')
+clock = pygame.time.Clock()
+
+
+test_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\sky.jfif')
+snail_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\snail-removebg-preview - Copy.png').convert_alpha()
+runner_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\runner-removebg-preview.png')
+fly_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\fly-removebg-preview.png')
+confetti_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\confetti.png').convert_alpha()
+jump_sign_surface = pygame.image.load('c:\\Users\\subii\\Downloads\\graphicss\\jump-removebg-preview.png').convert_alpha()
+
+
+font = pygame.font.Font(None, 50)
+game_over_font = pygame.font.Font(None, 100)
+
+
+score = 0
+game_over = False
+jumping = False
+jump_count = 10
+
+
+runner_rect = runner_surface.get_rect(midbottom=(screen_width // 4, screen_height - 50))
+runner_speed = 5
+jump_height = 100  # Adjust the jump height as needed
+jump_sign_timer = 0
+
+
+snail_rect = snail_surface.get_rect(bottomright=(screen_width, screen_height - 50))
+snail_speed = 4
+
+
+fly_rect = fly_surface.get_rect(midtop=(screen_width // 2, 100))
+fly_speed = 6
+
+
+score_rect = pygame.Rect(10, 10, 100, 50)
+
+def show_game_over():
+    game_over_surface = game_over_font.render('Game Over', False, 'Red')
+    game_over_rect = game_over_surface.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(game_over_surface, game_over_rect)
+    pygame.display.update()
+    pygame.time.delay(2000)  # Pause for 2 seconds
+    reset_game()
+
+def reset_game():
+    global score, game_over, jumping, jump_count
+    score = 0
+    game_over = False
+    jumping = False
+    jump_count = 10
+    runner_rect.midbottom = (screen_width // 4, screen_height - 50)
+    snail_rect.bottomright = (screen_width, screen_height - 50)
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE] and not jumping:
+        jumping = True
+
+    if jumping:
+        if jump_count >= -10:
+            neg = 1
+            if jump_count < 0:
+                neg = -1
+            runner_rect.y -= (jump_count ** 2) * 0.5 * neg
+            jump_count -= 1
+        else:
+            jumping = False
+            jump_count = 10
+
+   
+    if not game_over:
+        snail_rect.x -= snail_speed
+        if snail_rect.right <= 0:
+            snail_rect.left = screen_width
+            score += 1
+
+        fly_rect.x += fly_speed
+        if fly_rect.left > screen_width:
+            fly_rect.right = 0
+
+     
+        if runner_rect.colliderect(snail_rect):
+            game_over = True
+
+      
+        if score >= 10:
+            screen.blit(confetti_surface, (0, 0))
+
+       
+        if runner_rect.colliderect(fly_rect):
+            game_over = True
+
+       
+        if snail_rect.left < screen_width // 2 and not jumping:
+            screen.blit(jump_sign_surface, (screen_width // 2 - 50, screen_height - 200))
+            jump_sign_timer += 1
+            if jump_sign_timer >= 30:
+                jump_sign_timer = 0
+
+   
+    screen.blit(test_surface, (0, 0))
+    pygame.draw.rect(screen, 'pink', score_rect)
+    screen.blit(font.render(f'Score: {score}', True, 'Black'), (20, 20))
+
+    if not game_over:
+        screen.blit(snail_surface, snail_rect)
+        screen.blit(runner_surface, runner_rect)
+        screen.blit(fly_surface, fly_rect)
+
+    else:
+        show_game_over()
+
+    pygame.display.update()
+    clock.tick(60)
